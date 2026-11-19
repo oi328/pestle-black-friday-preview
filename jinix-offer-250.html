@@ -213,7 +213,7 @@ footer p{margin:0;line-height:1.7}
    <p class="small">هنتواصل معاك على رقم التليفون لمتابعة الأوردر.</p>
    <p class="sec-note">🔒 بياناتك سرية وتُستخدم لتوصيل الطلب فقط</p>
   </form>
-  <div class="ok" id="ok" hidden><h3>تم استلام طلبك.</h3><p>هنتواصل معاك على رقم التليفون لمتابعة الأوردر.</p><button class="btn btn-sec" type="button" id="newOrder">عمل طلب جديد</button></div>
+  <div class="ok" id="ok" hidden><h3 id="okTitle">تم استلام طلبك.</h3><p id="okMsg">هنتواصل معاك على رقم التليفون لمتابعة الأوردر.</p><a class="btn" id="waSend" href="#" target="_blank" rel="noopener" style="margin-bottom:10px;text-decoration:none">إرسال تفاصيل الطلب على واتساب</a><button class="btn btn-sec" type="button" id="newOrder">عمل طلب جديد</button></div>
  </div>
 </section>
 <section>
@@ -266,7 +266,7 @@ footer p{margin:0;line-height:1.7}
 </footer>
 <div class="bar" id="bar" hidden><a class="btn" id="barbtn" href="#order"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span id="barText">إتمام الطلب</span></a></div>
 <script>
-var SCRIPT_URL="";
+var SCRIPT_URL="", WA_ORDER="201098897958";
 var FB_URL="https://www.facebook.com/share/1JFJHQpEhy/", IG_URL="https://www.instagram.com/jinxhaircare";
 (function(){
 var PRICE=250,KEY="jinix_bf_cart_v1",cart={};
@@ -380,14 +380,24 @@ f.addEventListener("submit",function(e){e.preventDefault();
  if(area.length<2){err.textContent="اكتب المنطقة أو الحي.";f.area.focus();return}
  if(addrDetail.length<5){err.textContent="اكتب العنوان بالتفصيل (الشارع، رقم العمارة، الشقة).";f.address.focus();return}
  if(f.website.value)return;
- if(!SCRIPT_URL){err.textContent="النموذج لسه مش مربوط بالشيت. اربطيه الأول عشان توصلك الطلبات.";return}
  var fullAddr=gov+" - "+area+" - "+addrDetail;
  var items=cards.filter(function(c){return cart[c.dataset.id]}).map(function(c){return c.dataset.name+" × "+cart[c.dataset.id]}).join("، ");
  var total=count()*PRICE,gift=count()>=2?"نعم (هدية مع قطعتين أو أكتر)":"لا";
+ var waMsg="طلب جديد - عرض البلاك فرايداي (بيستل)\n--------------------\nالمنتجات: "+items+"\nالإجمالي: "+total+" جنيه (شحن مجاني)\nالهدية: "+gift+"\n--------------------\nالاسم: "+name+"\nالموبايل: "+phone+"\nالعنوان: "+fullAddr;
+ var waUrl="https://wa.me/"+WA_ORDER+"?text="+encodeURIComponent(waMsg);
+ function finishOrder(viaSheet){
+  cart={};save();f.reset();[].slice.call(f.querySelectorAll(".field.valid")).forEach(function(x){x.classList.remove("valid")});
+  btn.disabled=false;render();f.hidden=true;bar.hidden=true;
+  document.getElementById("waSend").href=waUrl;
+  document.getElementById("okTitle").textContent=viaSheet?"تم استلام طلبك.":"طلبك جاهز للإرسال عبر واتساب";
+  document.getElementById("okMsg").textContent=viaSheet?"تم تسجيل طلبك وهنتواصل معاك قريباً، وتقدر تبعت تفاصيله على واتساب من الزر بالأسفل.":"لو واتساب مفتحش أوتوماتيك، اضغط على الزر بالأسفل لإرسال تفاصيل الطلب.";
+  ok.hidden=false;ok.scrollIntoView({behavior:"smooth",block:"center"});
+ }
+ if(!SCRIPT_URL){window.open(waUrl,"_blank","noopener");finishOrder(false);return}
  btn.disabled=true;btn.textContent="جاري الإرسال...";
  fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({name:name,phone:phone,address:fullAddr,gov:gov,area:area,product:items,price:total+" جنيه",gift:gift})})
- .then(function(){cart={};save();f.reset();[].slice.call(f.querySelectorAll(".field.valid")).forEach(function(x){x.classList.remove("valid")});btn.disabled=false;render();f.hidden=true;bar.hidden=true;ok.hidden=false;ok.scrollIntoView({behavior:"smooth",block:"center"})})
- .catch(function(){btn.disabled=false;render();err.textContent="حصلت مشكلة في الإرسال. حاول تاني أو كلمنا على 01111514319."});
+ .then(function(){finishOrder(true)})
+ .catch(function(){btn.disabled=false;render();err.textContent="حصلت مشكلة في الإرسال. حاول تاني أو ابعت الأوردر على واتساب."});
 });
 document.getElementById("newOrder").addEventListener("click",function(){ok.hidden=true;f.hidden=false;var btn=document.getElementById("sub");btn.disabled=false;render()});
 })();
